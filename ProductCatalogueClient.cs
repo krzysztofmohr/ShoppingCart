@@ -1,4 +1,5 @@
-﻿using ShoppingCart.Data;
+﻿using Polly;
+using ShoppingCart.Data;
 
 namespace ShoppingCart
 {
@@ -15,10 +16,17 @@ namespace ShoppingCart
           @"http://private-05cc8-chapter2productcataloguemicroservice.apiary-mock.com";
         private static string getProductPathTemplate =
           "/products?productIds=[{0}]";
-        public async Task<IEnumerable<ShoppingCartItem>> GetShoppingCartItems(int[] productCatalogueIds)
-        {
-            return await GetItemsFromCatalogueService(productCatalogueIds).ConfigureAwait(false);
-        }
+
+        private static IAsyncPolicy exponentialRetryPolicy =
+            Policy
+                .Handle<Exception>()
+                .WaitAndRetryAsync(3, attempt => TimeSpan.FromMilliseconds(100 * Math.Pow(2, attempt)));
+
+        public Task<IEnumerable<ShoppingCartItem>>
+            GetShoppingCartItems(int[] productCatalogueIds) =>
+            exponentialRetryPolicy
+                .ExecuteAsync(async () => await GetItemsFromCatalogueService(productCatalogueIds).ConfigureAwait(false));
+
         private async Task<IEnumerable<ShoppingCartItem>> GetItemsFromCatalogueService(int[] productCatalogueIds)
         {
             var response = await
