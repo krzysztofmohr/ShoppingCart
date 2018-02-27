@@ -4,7 +4,7 @@ namespace ShoppingCart.EventFeed
 {
   public interface IEventStore
   {
-    IEnumerable<Event> GetEvents(long firstEventSequenceNumber, long lastEventSequenceNumber);
+    IEnumerable<Event> GetEvents(ulong firstEventSequenceNumber, ulong lastEventSequenceNumber);
     void Raise(string eventName, object content);
   }
 }
