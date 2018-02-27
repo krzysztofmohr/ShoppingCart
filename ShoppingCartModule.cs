@@ -1,6 +1,7 @@
 ﻿using Nancy;
 using Nancy.ModelBinding;
 using ShoppingCart.Data;
+using ShoppingCart.EventFeed;
 
 namespace ShoppingCart
 {
@@ -8,7 +9,8 @@ namespace ShoppingCart
     {
         public ShoppingCartModule(
             IShoppingCartStore shoppingCartStore,
-            IProductCatalogueClient productCatalog
+            IProductCatalogueClient productCatalog,
+            IEventStore eventStore
             ) : base("shoppingcart")
         {
             Get("/{userid:int}", parameters =>
@@ -27,7 +29,7 @@ namespace ShoppingCart
                     productCatalog
                         .GetShoppingCartItems(productcatalogIds)
                         .ConfigureAwait(false);
-                shoppingCart.AddItems(shoppingCartItems);
+                shoppingCart.AddItems(shoppingCartItems, eventStore);
 
                 shoppingCartStore.Save(shoppingCart);
 
@@ -40,7 +42,7 @@ namespace ShoppingCart
                 var userId = (int)parameters.userid;
 
                 var shoppingCart = shoppingCartStore.Get(userId);
-                shoppingCart.RemoveItems(productcatalogIds);
+                shoppingCart.RemoveItems(productcatalogIds, eventStore);
 
                 shoppingCartStore.Save(shoppingCart);
 
