@@ -1,17 +1,29 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 
 namespace ShoppingCart.EventFeed
 {
     class EventStore : IEventStore
     {
-        public IEnumerable<Event> GetEvents(long firstEventSequenceNumber, long lastEventSequenceNumber)
-        {
-            throw new System.NotImplementedException();
-        }
+        private static long currentSequenceNumber = 0;
+        private static readonly IList<Event> _events = new List<Event>();
+
+        public IEnumerable<Event> GetEvents(ulong firstEventSequenceNumber = ulong.MinValue, ulong lastEventSequenceNumber = ulong.MaxValue) =>
+            _events.Where(e => e.SequenceNumber >= firstEventSequenceNumber &&
+                                e.SequenceNumber <= lastEventSequenceNumber).ToArray();
+        
 
         public void Raise(string eventName, object content)
         {
-            throw new System.NotImplementedException();
+            var seqNumber = (ulong)Interlocked.Increment(ref currentSequenceNumber);
+            _events.Add(new Event(
+                seqNumber,
+                DateTimeOffset.Now,
+                eventName,
+                content
+            ));
         }
     }
 }
